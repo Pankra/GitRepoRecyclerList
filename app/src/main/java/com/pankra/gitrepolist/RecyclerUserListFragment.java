@@ -12,6 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.pankra.gitrepolist.adapter.UserAdapter;
+import com.pankra.gitrepolist.interfaces.LoadUserListener;
+import com.pankra.gitrepolist.interfaces.UserListTapListener;
 import com.pankra.gitrepolist.model.User;
 import com.pankra.gitrepolist.service.GitHubService;
 
@@ -31,7 +33,7 @@ public class RecyclerUserListFragment extends Fragment {
     protected List<User> mDataSet = new ArrayList<>();
     protected RecyclerView mRecyclerView;
     protected UserAdapter mAdapter;
-
+    private LinearLayoutManager mLayoutManager;
 
     private UserListCallback mCallback = sCallback;
 
@@ -53,44 +55,70 @@ public class RecyclerUserListFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initDataSet();
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.recycler_user_list_fragment, container, false);
-        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerView);
-
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-
-        return rootView;
+        return inflater.inflate(R.layout.recycler_user_list_fragment, container, false);
     }
 
-    private void initDataSet() {
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerView);
+        mRecyclerView.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mAdapter = new UserAdapter(getActivity(), mTapListener, mLoadListener);
+        mRecyclerView.setAdapter(mAdapter);
+
+        loadUserData(0);
+    }
+
+    private final UserListTapListener mTapListener = new UserListTapListener() {
+        @Override
+        public void userTap(String login) {
+            mCallback.onItemSelected(login);
+        }
+    };
+
+    private final LoadUserListener mLoadListener = new LoadUserListener() {
+        @Override
+        public void loadNext(long lastUserId) {
+            loadUserData(lastUserId);
+        }
+    };
+
+    private void addDataToAdapter(List<User> users) {
+        if (users != null) {
+            mAdapter.addItems(users);
+        }
+    }
+
+    public void loadUserData(long lastUserId) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.github.com")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         GitHubService gitHubService = retrofit.create(GitHubService.class);
 
-        Call<List<User>> call = gitHubService.getUsers(0);
+        Call<List<User>> call = gitHubService.getUsers(lastUserId);
 
         call.enqueue(new Callback<List<User>>() {
             @Override
             public void onResponse(Response<List<User>> response, Retrofit retrofit) {
-                mDataSet = response.body();
-                mAdapter = new UserAdapter(getContext(), mDataSet);
-                mAdapter.setUserListCallback(mCallback);
-
-                mRecyclerView.setAdapter(mAdapter);
+                List<User> users = response.body();
+                addDataToAdapter(users);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                Log.e("getUser", t.getMessage());
+                Log.e("loadUserData", t.getMessage());
             }
         });
+
     }
 
     @Override
@@ -101,12 +129,5 @@ public class RecyclerUserListFragment extends Fragment {
         }
 
         mCallback = (UserListCallback) context;
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-
-        mCallback = sCallback;
     }
 }

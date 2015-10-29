@@ -63,7 +63,7 @@ public class RepoAdapter extends RecyclerView.Adapter<RepoAdapter.ViewHolder>{
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Repo repo = mDataSet.get(position);
-        String rowText = (repo.isFork() ? "f " : "") + repo.getName() + " (" + repo.getDescription() + ") \n" +
+        String rowText = repo.getName() + " (" + repo.getDescription() + ") \n" +
                 "html_url: " + repo.getHtml_url() + "\n" +
                 "owner: " + repo.getOwner_url();
 

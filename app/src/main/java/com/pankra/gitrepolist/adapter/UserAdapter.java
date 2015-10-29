@@ -2,7 +2,6 @@ package com.pankra.gitrepolist.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,34 +10,39 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.pankra.gitrepolist.R;
+import com.pankra.gitrepolist.interfaces.LoadUserListener;
+import com.pankra.gitrepolist.interfaces.UserListTapListener;
 import com.pankra.gitrepolist.model.User;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import static com.pankra.gitrepolist.RecyclerUserListFragment.*;
 
 /**
  * Created by SPankratov on 26.10.2015.
  */
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
-    private static List<User> mDataSet;
+    private List<User> mDataSet = new ArrayList<>();
     private Context mContext;
-    private UserListCallback mUserListCallback;
 
-    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    private UserListTapListener mTapListener;
+    private LoadUserListener mLoadUserListener;
+
+    public UserAdapter(Context context, UserListTapListener tapListener, LoadUserListener loadListener) {
+        this.mContext = context;
+        mTapListener = tapListener;
+        mLoadUserListener = loadListener;
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView textView;
         private final ImageView imgView;
-        private UserListCallback listCallback;
-
-        public void setListCallback(UserListCallback listCallback) {
-            this.listCallback = listCallback;
-        }
+        private View view;
 
         public ViewHolder(View v) {
             super(v);
-            v.setOnClickListener(this);
             textView = (TextView) v.findViewById(R.id.txt);
             imgView = (ImageView) v.findViewById(R.id.img);
+            view = v;
         }
 
         public TextView getTextView() {
@@ -49,20 +53,9 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
             return imgView;
         }
 
-        @Override
-        public void onClick(View v) {
-            Log.d("DDDD", "Element " + getLayoutPosition() + " clicked.");
-            listCallback.onItemSelected(mDataSet.get(getLayoutPosition()).getLogin());
+        public View getView() {
+            return view;
         }
-    }
-
-    public UserAdapter(Context context, List<User> mDataSet) {
-        this.mDataSet = mDataSet;
-        this.mContext = context;
-    }
-
-    public void setUserListCallback(UserListCallback userListCallback) {
-        this.mUserListCallback = userListCallback;
     }
 
     @Override
@@ -70,19 +63,40 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.user_list_row, parent, false);
         ViewHolder vh = new ViewHolder(v);
-        vh.setListCallback(mUserListCallback);
         return vh;
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.getTextView().setText(mDataSet.get(position).getLogin());
+        final User item = mDataSet.get(position);
+        holder.getTextView().setText(item.getLogin());
+        Glide.with(mContext).load(item.getAvatar_url()).override(50, 50).into(holder.getImgView());
 
-        Glide.with(mContext).load(mDataSet.get(position).getAvatar_url()).override(50, 50).into(holder.getImgView());
+        holder.getView().setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (item != null) {
+                    mTapListener.userTap(item.getLogin());
+                }
+            }
+        });
+
+        if (position == mDataSet.size() - 1) {
+            long lastLoadedUser = mDataSet.get(mDataSet.size() - 1).getId();
+            mLoadUserListener.loadNext(lastLoadedUser);
+        }
+
+
     }
 
     @Override
     public int getItemCount() {
         return mDataSet.size();
     }
+
+    public void addItems(List<User> users) {
+        mDataSet.addAll(users);
+        notifyDataSetChanged();
+    }
+
 }
