@@ -8,6 +8,7 @@ import java.util.List;
 import retrofit.Call;
 import retrofit.http.GET;
 import retrofit.http.Path;
+import retrofit.http.Query;
 
 /**
  * Created by Serge on 24.10.2015.
@@ -15,7 +16,7 @@ import retrofit.http.Path;
 public interface GitHubService {
 
     @GET("/users")
-    Call<List<User>> getUsers();
+    Call<List<User>> getUsers(@Query("since") long lastUserId);
 
     @GET("/users/{login}/repos")
     Call<List<Repo>> getRepos(@Path("login") String login);

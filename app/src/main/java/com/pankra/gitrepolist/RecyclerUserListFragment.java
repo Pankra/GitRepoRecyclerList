@@ -74,7 +74,7 @@ public class RecyclerUserListFragment extends Fragment {
                 .build();
         GitHubService gitHubService = retrofit.create(GitHubService.class);
 
-        Call<List<User>> call = gitHubService.getUsers();
+        Call<List<User>> call = gitHubService.getUsers(0);
 
         call.enqueue(new Callback<List<User>>() {
             @Override
