@@ -17,7 +17,6 @@ import com.pankra.gitrepolist.interfaces.UserListTapListener;
 import com.pankra.gitrepolist.model.User;
 import com.pankra.gitrepolist.service.GitHubService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import retrofit.Call;
@@ -30,7 +29,6 @@ import retrofit.Retrofit;
  * Created by SPankratov on 26.10.2015.
  */
 public class RecyclerUserListFragment extends Fragment {
-    protected List<User> mDataSet = new ArrayList<>();
     protected RecyclerView mRecyclerView;
     protected UserAdapter mAdapter;
     private LinearLayoutManager mLayoutManager;
