@@ -1,10 +1,16 @@
 package com.pankra.gitrepolist;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.TextView;
 
 /**
  * An activity representing a single User detail screen. This
@@ -22,8 +28,32 @@ public class UserDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_detail);
 
+        ActionBar bar = getSupportActionBar();
+        bar.setCustomView(R.layout.seach_layout);
+        EditText search = (EditText) bar.getCustomView().findViewById(R.id.txt_search);
+
+        search.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                Bundle arguments = new Bundle();
+                arguments.putString(UserDetailFragment.USER_LOGIN, v.getText().toString());
+                UserDetailFragment fragment = new UserDetailFragment();
+                fragment.setArguments(arguments);
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.user_detail_container, fragment)
+                        .commit();
+                v.setText(null);
+                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+
+                return false;
+            }
+        });
+
+        bar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM
+                | ActionBar.DISPLAY_SHOW_HOME);
         // Show the Up button in the action bar.
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        bar.setDisplayHomeAsUpEnabled(true);
 
         // savedInstanceState is non-null when there is fragment state
         // saved from previous configurations of this activity

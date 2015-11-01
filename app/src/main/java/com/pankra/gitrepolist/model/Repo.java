@@ -41,7 +41,7 @@ public class Repo {
     }
 
     public String getOwner_url() {
-        return owner.url;
+        return owner == null ? null : owner.url;
     }
 
     public String getHtml_url() {

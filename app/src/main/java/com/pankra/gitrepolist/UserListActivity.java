@@ -1,9 +1,15 @@
 package com.pankra.gitrepolist;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.view.KeyEvent;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.TextView;
 
 
 /**
@@ -14,7 +20,7 @@ import android.support.v4.app.FragmentTransaction;
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-public class UserListActivity extends FragmentActivity
+public class UserListActivity extends AppCompatActivity
         implements RecyclerUserListFragment.UserListCallback {
 
     /**
@@ -40,6 +46,26 @@ public class UserListActivity extends FragmentActivity
             // res/values-sw600dp). If this view is present, then the
             // activity should be in two-pane mode.
             mTwoPane = true;
+
+            ActionBar bar = getSupportActionBar();
+            bar.setCustomView(R.layout.seach_layout);
+            EditText search = (EditText) bar.getCustomView().findViewById(R.id.txt_search);
+
+            search.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                @Override
+                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                    replaceDetailFragment(v.getText().toString());
+                    v.setText(null);
+                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+
+                    return false;
+                }
+            });
+
+            bar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM
+                    | ActionBar.DISPLAY_SHOW_HOME);
+
         }
     }
 
@@ -54,13 +80,7 @@ public class UserListActivity extends FragmentActivity
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
             // fragment transaction.
-            Bundle arguments = new Bundle();
-            arguments.putString(UserDetailFragment.USER_LOGIN, id);
-            UserDetailFragment fragment = new UserDetailFragment();
-            fragment.setArguments(arguments);
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.user_detail_container, fragment)
-                    .commit();
+            replaceDetailFragment(id);
 
         } else {
             // In single-pane mode, simply start the detail activity
@@ -69,5 +89,15 @@ public class UserListActivity extends FragmentActivity
             detailIntent.putExtra(UserDetailFragment.USER_LOGIN, id);
             startActivity(detailIntent);
         }
+    }
+
+    private void replaceDetailFragment(String id) {
+        Bundle arguments = new Bundle();
+        arguments.putString(UserDetailFragment.USER_LOGIN, id);
+        UserDetailFragment fragment = new UserDetailFragment();
+        fragment.setArguments(arguments);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.user_detail_container, fragment)
+                .commit();
     }
 }

@@ -55,7 +55,7 @@ public class UserDetailFragment extends Fragment {
         }
     }
 
-    private void getRepoList(String login) {
+    private void getRepoList(final String login) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.github.com")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -68,6 +68,16 @@ public class UserDetailFragment extends Fragment {
             @Override
             public void onResponse(Response<List<Repo>> response, Retrofit retrofit) {
                 mDataSet = response.body();
+                if (mDataSet == null) {
+                    Repo repo = new Repo();
+                    repo.setName("User '" + login +"' was not found.");
+                    mDataSet = new ArrayList<>();
+                    mDataSet.add(repo);
+                } else if (mDataSet.size() == 0) {
+                    Repo repo = new Repo();
+                    repo.setName("User '" + login +"' has no repos.");
+                    mDataSet.add(repo);
+                }
                 mAdapter = new RepoAdapter(getContext(), mDataSet);
 
                 mRecyclerView.setAdapter(mAdapter);
