@@ -1,5 +1,6 @@
 package com.pankra.gitrepolist.service;
 
+import com.pankra.gitrepolist.model.Rate;
 import com.pankra.gitrepolist.model.Repo;
 import com.pankra.gitrepolist.model.User;
 
@@ -17,6 +18,9 @@ public interface GitHubService {
 
     @GET("/users")
     Call<List<User>> getUsers(@Query("since") long lastUserId);
+
+    @GET("/rate_limit")
+    Call<Rate> getRateLimit();
 
     @GET("/users/{login}/repos")
     Call<List<Repo>> getRepos(@Path("login") String login);

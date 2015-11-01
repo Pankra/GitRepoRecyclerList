@@ -2,4 +2,7 @@
     <string name="app_name">GitRepoList</string>
     <string name="title_user_detail">User Repo List</string>
     <string name="search_hint">Input user name</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="auth_dialog_title">Auth needed</string>
 </resources>

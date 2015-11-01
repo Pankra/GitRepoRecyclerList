@@ -1,5 +1,6 @@
 package com.pankra.gitrepolist;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -14,14 +15,15 @@ import android.view.ViewGroup;
 import com.pankra.gitrepolist.adapter.UserAdapter;
 import com.pankra.gitrepolist.interfaces.LoadUserListener;
 import com.pankra.gitrepolist.interfaces.UserListTapListener;
+import com.pankra.gitrepolist.model.Rate;
 import com.pankra.gitrepolist.model.User;
 import com.pankra.gitrepolist.service.GitHubService;
+import com.pankra.gitrepolist.service.ServiceGenerator;
 
 import java.util.List;
 
 import retrofit.Call;
 import retrofit.Callback;
-import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 
@@ -34,6 +36,8 @@ public class RecyclerUserListFragment extends Fragment {
     private LinearLayoutManager mLayoutManager;
 
     private UserListCallback mCallback = sCallback;
+    private String login;
+    private String pass;
 
     public interface UserListCallback {
         void onItemSelected(String id);
@@ -71,8 +75,10 @@ public class RecyclerUserListFragment extends Fragment {
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new UserAdapter(getActivity(), mTapListener, mLoadListener);
         mRecyclerView.setAdapter(mAdapter);
+        login = getArguments().getString(UserDetailFragment.AUTH_LOGIN);
+        pass = getArguments().getString(UserDetailFragment.AUTH_PASS);
 
-        loadUserData(0);
+        loadUserData(0, login, pass);
     }
 
     private final UserListTapListener mTapListener = new UserListTapListener() {
@@ -85,7 +91,7 @@ public class RecyclerUserListFragment extends Fragment {
     private final LoadUserListener mLoadListener = new LoadUserListener() {
         @Override
         public void loadNext(long lastUserId) {
-            loadUserData(lastUserId);
+            loadUserData(lastUserId, login, pass);
         }
     };
 
@@ -95,25 +101,48 @@ public class RecyclerUserListFragment extends Fragment {
         }
     }
 
-    public void loadUserData(long lastUserId) {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.github.com")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        GitHubService gitHubService = retrofit.create(GitHubService.class);
+    public void loadUserData(final long lastUserId, String login, String pass) {
+        final GitHubService gitHubService = ServiceGenerator.createService(GitHubService.class, login, pass);
 
-        Call<List<User>> call = gitHubService.getUsers(lastUserId);
-
-        call.enqueue(new Callback<List<User>>() {
+        Call<Rate> limits = gitHubService.getRateLimit();
+        limits.enqueue(new Callback<Rate>() {
             @Override
-            public void onResponse(Response<List<User>> response, Retrofit retrofit) {
-                List<User> users = response.body();
-                addDataToAdapter(users);
+            public void onResponse(Response<Rate> response, Retrofit retrofit) {
+                Rate rate = response.body();
+                Log.d("RateLimit", "Remaining: " + rate.getCoreRemaining());
+                Log.d("RateLimit", "Limit: " + rate.getCoreLimit());
+                if (rate.getCoreRemaining() == 0) {
+                    if (rate.getCoreLimit() == 60) {
+                        //пользователь еще не авторизовался, предложим ему авторизоваться
+                        new AuthDialogFragment().show(getFragmentManager(), "AuthDialog");
+                    } else {
+                        //пользователь авторизован и все равно достиг предела, просто сообщим ему это
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
+                                .setMessage("Request Limit of " + rate.getCoreLimit() + " exceeded.");
+                        builder.show();
+                    }
+                } else {
+                    Call<List<User>> call = gitHubService.getUsers(lastUserId);
+
+                    call.enqueue(new Callback<List<User>>() {
+                        @Override
+                        public void onResponse(Response<List<User>> response, Retrofit retrofit) {
+                            List<User> users = response.body();
+                            addDataToAdapter(users);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            Log.e("loadUserData", t.getMessage());
+                        }
+                    });
+
+                }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                Log.e("loadUserData", t.getMessage());
+                Log.e("checkRateLimit", t.getMessage());
             }
         });
 

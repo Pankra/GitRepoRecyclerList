@@ -3,9 +3,11 @@ package com.pankra.gitrepolist;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -21,13 +23,15 @@ import android.widget.TextView;
  * item details side-by-side using two vertical panes.
  */
 public class UserListActivity extends AppCompatActivity
-        implements RecyclerUserListFragment.UserListCallback {
+        implements RecyclerUserListFragment.UserListCallback, AuthDialogFragment.AuthListener {
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
      * device.
      */
     private boolean mTwoPane;
+    private String mLogin;
+    private String mPass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +39,11 @@ public class UserListActivity extends AppCompatActivity
         setContentView(R.layout.activity_user_list);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        Bundle arguments = new Bundle();
+        arguments.putString(UserDetailFragment.AUTH_LOGIN, mLogin);
+        arguments.putString(UserDetailFragment.AUTH_PASS, mPass);
         RecyclerUserListFragment fragment = new RecyclerUserListFragment();
+        fragment.setArguments(arguments);
         transaction.replace(R.id.user_list_container, fragment);
         transaction.commit();
 
@@ -56,7 +64,7 @@ public class UserListActivity extends AppCompatActivity
                 public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                     replaceDetailFragment(v.getText().toString());
                     v.setText(null);
-                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
 
                     return false;
@@ -87,6 +95,8 @@ public class UserListActivity extends AppCompatActivity
             // for the selected item ID.
             Intent detailIntent = new Intent(this, UserDetailActivity.class);
             detailIntent.putExtra(UserDetailFragment.USER_LOGIN, id);
+            detailIntent.putExtra(UserDetailFragment.AUTH_LOGIN, mLogin);
+            detailIntent.putExtra(UserDetailFragment.AUTH_PASS, mPass);
             startActivity(detailIntent);
         }
     }
@@ -94,10 +104,20 @@ public class UserListActivity extends AppCompatActivity
     private void replaceDetailFragment(String id) {
         Bundle arguments = new Bundle();
         arguments.putString(UserDetailFragment.USER_LOGIN, id);
+        arguments.putString(UserDetailFragment.AUTH_LOGIN, mLogin);
+        arguments.putString(UserDetailFragment.AUTH_PASS, mPass);
         UserDetailFragment fragment = new UserDetailFragment();
         fragment.setArguments(arguments);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.user_detail_container, fragment)
                 .commit();
+    }
+
+    @Override
+    public void onAuthSubmit(String login, String pass) {
+        mLogin = login;
+        mPass = pass;
+        Log.d("UserListActivivty: ", "LOGIN: " + login);
+        Log.d("UserListActivivty: ", "PASS: " + pass);
     }
 }

@@ -37,6 +37,8 @@ public class UserDetailActivity extends AppCompatActivity {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 Bundle arguments = new Bundle();
                 arguments.putString(UserDetailFragment.USER_LOGIN, v.getText().toString());
+                arguments.putString(UserDetailFragment.AUTH_LOGIN, getIntent().getStringExtra(UserDetailFragment.AUTH_LOGIN));
+                arguments.putString(UserDetailFragment.AUTH_PASS, getIntent().getStringExtra(UserDetailFragment.AUTH_PASS));
                 UserDetailFragment fragment = new UserDetailFragment();
                 fragment.setArguments(arguments);
                 getSupportFragmentManager().beginTransaction()
@@ -68,8 +70,9 @@ public class UserDetailActivity extends AppCompatActivity {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
             Bundle arguments = new Bundle();
-            arguments.putString(UserDetailFragment.USER_LOGIN,
-                    getIntent().getStringExtra(UserDetailFragment.USER_LOGIN));
+            arguments.putString(UserDetailFragment.USER_LOGIN, getIntent().getStringExtra(UserDetailFragment.USER_LOGIN));
+            arguments.putString(UserDetailFragment.AUTH_LOGIN, getIntent().getStringExtra(UserDetailFragment.AUTH_LOGIN));
+            arguments.putString(UserDetailFragment.AUTH_PASS, getIntent().getStringExtra(UserDetailFragment.AUTH_PASS));
             UserDetailFragment fragment = new UserDetailFragment();
             fragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()
